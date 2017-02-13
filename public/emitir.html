@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Emitir Video</title>
+	<script type="text/javascript" src="/javascripts/jquery-3.1.1.min.js"></script>
+	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="estilos/estilos.css">
+    <link href="https://fonts.googleapis.com/css?family=Ubuntu" rel="stylesheet">
+</head>
+<body id="cuerpo">
+   <div id="texto-E">
+      <div class="texto-video">
+        <p>Emitiendo Video</p>
+      </div>
+    </div>
+  <div class="div1">
+    <div id="div-video">
+      <video src="" id="video" style="width: 800px;height: 600px;" autoplay="true"></video>
+      <div id="logger"></div>
+    </div>
+  </div>
+  <div class="div2"> 
+      <div class="mensaje">
+         <ul id="messages"></ul>
+         <form action="">
+              <input id="m" autocomplete="off" placeholder="Escribir texto" class="input-text"><button class="enviar">Send</button>
+         </form>
+      </div>
+  </div>
+<canvas style="display:none" id="preview"></canvas>
+
+<script type="text/javascript">
+    //scrip para enviar imagenes
+	var canvas=document.getElementById("preview");
+	var context= canvas.getContext("2d");
+    canvas.width =360;
+    canvas.height=320;
+
+    context.width=canvas.width;
+    context.height=canvas.height;
+    
+    var video = document.getElementById("video");
+
+    var socket = io();
+    function logger(msg)
+    {
+    	$("#logger").text(msg);
+    } 
+    function loadCam(stream)
+    {
+    	video.src=window.URL.createObjectURL(stream);  
+    	logger('Camara cargada correctamente [OK]');
+    }
+    function loadFail()
+    {
+    	 logger('Camara no conectada, por favor revise su Camara');
+    }
+    
+    function viewVideo(video,context)
+    {
+    	context.drawImage(video,0,0,context.width,context.height);
+    	socket.emit('stream',canvas.toDataURL('image/webp'));
+    }
+    $(function(){
+        navigator.getUserMedia=(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || msgGetUserMedia);
+        
+        if(navigator.getUserMedia)
+        {
+        	navigator.getUserMedia({video: true,audio: true},loadCam,loadFail)
+        }
+         setInterval(function(){
+                viewVideo(video,context);
+         },15);
+        
+    });
+
+</script>
+
+<script>
+      //scrip para recibir mensaje
+      var socket = io();
+      $('form').submit(function(){
+        socket.emit('chat message', "Conferista:  "+ $('#m').val());
+        $('#m').val('');
+        return false;
+      });
+      socket.on('chat message', function(msg){
+        $('#messages').append($('<li>').text(msg));
+      });
+ </script>
+</body>
+</html>
